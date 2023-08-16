@@ -23,10 +23,9 @@ class TennisMatch {
       this._winner =
         this.score.getScoreA() === 25 ? this.playerA : this.playerB;
     }
+    this.score.reset();
   }
 
-  start(matchType: 'small'): void;
-  start(matchType: 'big'): void;
   start(matchType: 'small' | 'big') {
     console.log(`Start the ${matchType} match`);
     const targetScore = matchType === 'small' ? 11 : 25;
@@ -87,6 +86,10 @@ class Score {
 
   getScoreB() {
     return this._scoreB;
+  }
+  reset() {
+    this._scoreA = 0;
+    this._scoreB = 0;
   }
 }
 
