@@ -1,44 +1,41 @@
-class TennisMatch {
+abstract class TennisMatch {
   private playerA: Player;
   private playerB: Player;
   private currentServingPlayer: Player;
   private score: Score = new Score();
+  protected strategy: GameStrategy;
   private _winner: Player | null = null;
 
-  constructor(playerA: Player, playerB: Player) {
+  protected abstract gameOptions: GameOptions;
+
+  constructor(playerA: Player, playerB: Player, strategy: GameStrategy) {
     this.playerA = playerA;
     this.playerB = playerB;
-    this.currentServingPlayer = playerA;
+    this.strategy = strategy;
+    this.currentServingPlayer = strategy.getNextServer();
   }
 
   public get winner(): Player | null {
     return this._winner;
   }
 
-  private determineWinner(matchType: 'small' | 'big') {
-    if (matchType === 'small') {
-      this._winner =
-        this.score.getScoreA() === 11 ? this.playerA : this.playerB;
-    } else if (matchType === 'big') {
-      this._winner =
-        this.score.getScoreA() === 25 ? this.playerA : this.playerB;
-    }
-    this.score.reset();
+  private determineWinner() {
+    this._winner =
+      this.score.getScoreA() === this.gameOptions.maxScore
+        ? this.playerA
+        : this.playerB;
   }
 
-  start(matchType: 'small' | 'big') {
-    console.log(`Start the ${matchType} match`);
-    const targetScore = matchType === 'small' ? 11 : 25;
-
+  start() {
     while (
-      this.score.getScoreA() < targetScore &&
-      this.score.getScoreB() < targetScore
+      this.score.getScoreA() < this.gameOptions.maxScore &&
+      this.score.getScoreB() < this.gameOptions.maxScore
     ) {
       let result = this.currentServingPlayer.serve();
       this.updateScore(result);
-      this.updateServingPlayer();
+      this.currentServingPlayer = this.strategy.getNextServer();
     }
-    this.determineWinner(matchType);
+    this.determineWinner();
   }
 
   updateScore(result: boolean) {
@@ -60,6 +57,59 @@ class TennisMatch {
     } else {
       this.currentServingPlayer = this.playerA;
     }
+  }
+}
+
+abstract class GameStrategy {
+  protected serveOrder: Array<Player> = [];
+  protected currentServerIndex: number = 0;
+
+  constructor(playerA: Player, playerB: Player) {
+    this.serveOrder = this.createServeOrder(playerA, playerB);
+  }
+  protected abstract createServeOrder(
+    playerA: Player,
+    playerB: Player
+  ): Array<Player>;
+  public abstract getNextServer(): Player;
+}
+class DefaultStrategy extends GameStrategy {
+  constructor(playerA: Player, playerB: Player) {
+    super(playerA, playerB);
+  }
+  public getNextServer(): Player {
+    const currentServer = this.serveOrder[this.currentServerIndex];
+    this.currentServerIndex =
+      (this.currentServerIndex + 1) % this.serveOrder.length;
+    return currentServer;
+  }
+  protected createServeOrder(playerA: Player, playerB: Player): Array<Player> {
+    return [playerA, playerA, playerB, playerB];
+  }
+}
+abstract class GameOptions {
+  protected _maxScore: number;
+
+  constructor(maxScore: number) {
+    this._maxScore = maxScore;
+  }
+  get maxScore(): number {
+    return this._maxScore;
+  }
+}
+class BigTennisMatchOptions extends GameOptions {
+  static readonly BigMatchMaxScore: number = 25;
+
+  constructor() {
+    super(BigTennisMatchOptions.BigMatchMaxScore);
+  }
+}
+
+class BigTennisMatch extends TennisMatch {
+  protected gameOptions: GameOptions;
+  constructor(playerA: Player, playerB: Player, strategy: GameStrategy) {
+    super(playerA, playerB, strategy);
+    this.gameOptions = new BigTennisMatchOptions();
   }
 }
 
@@ -120,8 +170,10 @@ class Player {
 
 const playerA = new Player('A');
 const playerB = new Player('B');
-const match = new TennisMatch(playerA, playerB);
-match.start('small');
-console.log(`Player winner it;s :${match.winner?.getName()}`);
-match.start('big');
-console.log(`Player winner it;s :${match.winner?.getName()}`);
+const matchBig = new BigTennisMatch(
+  playerA,
+  playerB,
+  new DefaultStrategy(playerA, playerB)
+);
+matchBig.start();
+console.log(`Player winner it's :${matchBig.winner?.getName()}`);
