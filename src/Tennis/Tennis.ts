@@ -61,27 +61,29 @@ abstract class TennisMatch {
 }
 
 abstract class GameStrategy {
-  protected serveOrder: Array<Player>;
-  protected currentServerOrder: number = 0;
-  abstract createServeOrder(playerA: Player, playerB: Player): Array<Player>;
-  abstract getNextServer(): Player;
+  protected serveOrder: Array<Player> = [];
+  protected currentServerIndex: number = 0;
 
-  protected constructor() {
-    this.serveOrder = [];
+  constructor(playerA: Player, playerB: Player) {
+    this.serveOrder = this.createServeOrder(playerA, playerB);
   }
+  protected abstract createServeOrder(
+    playerA: Player,
+    playerB: Player
+  ): Array<Player>;
+  public abstract getNextServer(): Player;
 }
 class DefaultStrategy extends GameStrategy {
   constructor(playerA: Player, playerB: Player) {
-    super();
-    this.serveOrder = this.createServeOrder(playerA, playerB);
+    super(playerA, playerB);
   }
-  getNextServer(): Player {
-    const nextServer = this.serveOrder[this.currentServerOrder];
-    this.currentServerOrder =
-      (this.currentServerOrder + 1) % this.serveOrder.length;
-    return nextServer;
+  public getNextServer(): Player {
+    const currentServer = this.serveOrder[this.currentServerIndex];
+    this.currentServerIndex =
+      (this.currentServerIndex + 1) % this.serveOrder.length;
+    return currentServer;
   }
-  createServeOrder(playerA: Player, playerB: Player): Array<Player> {
+  protected createServeOrder(playerA: Player, playerB: Player): Array<Player> {
     return [playerA, playerA, playerB, playerB];
   }
 }
