@@ -62,7 +62,7 @@ abstract class TennisMatch {
 
 abstract class GameStrategy {
   protected serveOrder: Array<Player>;
-  protected CurrentServerOrder: number = 0;
+  protected currentServerOrder: number = 0;
   abstract createServeOrder(playerA: Player, playerB: Player): Array<Player>;
   abstract getNextServer(): Player;
 
@@ -76,9 +76,9 @@ class DefaultStrategy extends GameStrategy {
     this.serveOrder = this.createServeOrder(playerA, playerB);
   }
   getNextServer(): Player {
-    const nextServer = this.serveOrder[this.CurrentServerOrder];
-    this.CurrentServerOrder =
-      (this.CurrentServerOrder + 1) % this.serveOrder.length;
+    const nextServer = this.serveOrder[this.currentServerOrder];
+    this.currentServerOrder =
+      (this.currentServerOrder + 1) % this.serveOrder.length;
     return nextServer;
   }
   createServeOrder(playerA: Player, playerB: Player): Array<Player> {
